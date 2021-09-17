@@ -1,15 +1,23 @@
 import dash
 from dash import dcc
 from dash import html
+from dash.dependencies import Input, Output
 import plotly.express as px
 import pandas as pd
-from data import countries_df, totals_df
+from data import (
+    countries_df,
+    make_global_df,
+    make_country_df,
+    totals_df,
+    dropdown_options,
+)
 from builder import make_table
 
 stylesheets = [
     "https://cdn.jsdelivr.net/npm/reset-css@5.0.1/reset.min.css",
     "https://fonts.googleapis.com/css2?family=Open+Sans&display=swap",
 ]
+app = dash.Dash(__name__, external_stylesheets=stylesheets)
 
 bars_graph = px.bar(
     totals_df,
@@ -22,8 +30,6 @@ bars_graph = px.bar(
     # color=["Confirmed", "Deaths", "Recovered"],
 )
 bars_graph.update_traces(marker_color=["#e74c3c", "#9b59b6", "#2ecc71"])
-
-app = dash.Dash(__name__, external_stylesheets=stylesheets)
 
 buble_map = px.scatter_geo(
     countries_df,
@@ -84,7 +90,8 @@ app.layout = html.Div(
                 html.Div(
                     style={
                         "gridColumn": "span 2",
-                        "height": "600px",
+                        "gridRow": "span 2",
+                        "height": "85vh",
                         "overflow-y": "auto",
                         "overflow-x": "hidden",
                     },
@@ -94,10 +101,58 @@ app.layout = html.Div(
                     style={"gridColumn": "span 1"},
                     children=[dcc.Graph(figure=bars_graph)],
                 ),
+                html.Div(
+                    style={"gridColumn": "span 3"},
+                    children=[
+                        dcc.Dropdown(
+                            id="country-input",
+                            options=[
+                                {"label": country, "value": country}
+                                for country in dropdown_options
+                            ],
+                            style={
+                                "width": 400,
+                                "margin": "0 auto",
+                                "color": "#222222",
+                                "marginBottom": "15px",
+                            },
+                        ),
+                        dcc.Graph(
+                            id="country_graph",
+                            style={"height": "400px"},
+                        ),
+                    ],
+                ),
             ],
         ),
     ],
 )
+
+
+@app.callback(Output("country_graph", "figure"), [Input("country-input", "value")])
+def update_hello(value):
+    if value:
+        df = make_country_df(value)
+    else:
+        df = make_global_df()
+    fig = px.line(
+        df,
+        x="date",
+        y=["confirmed", "deaths", "recovered"],
+        template="plotly_dark",
+        labels={
+            "variable": "Condition",
+            "date": "Date",
+            "value": "Cases",
+        },
+        hover_data={
+            "variable": False,
+            "value": ":,",
+        },
+    )
+    fig.update_xaxes(rangeslider_visible=True)
+    return fig
+
 
 if __name__ == "__main__":
     app.run_server(debug=True)
