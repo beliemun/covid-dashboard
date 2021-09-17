@@ -19,6 +19,8 @@ stylesheets = [
 ]
 app = dash.Dash(__name__, external_stylesheets=stylesheets)
 
+server = app.server
+
 bars_graph = px.bar(
     totals_df,
     x="condition",
@@ -152,7 +154,3 @@ def update_graph(value):
     )
     fig.update_xaxes(rangeslider_visible=True)
     return fig
-
-
-if __name__ == "__main__":
-    app.run_server(debug=True)
