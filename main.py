@@ -130,7 +130,7 @@ app.layout = html.Div(
 
 
 @app.callback(Output("country_graph", "figure"), [Input("country-input", "value")])
-def update_hello(value):
+def update_graph(value):
     if value:
         df = make_country_df(value)
     else:
